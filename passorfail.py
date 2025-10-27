@@ -18,8 +18,10 @@ class PassOrFail:
     def __init__(self, root):
         self.root = root
         self.root.title("PassOrFail - Password Security Checker")
-        self.root.geometry("650x800")
-        self.root.resizable(False, False)
+        self.root.geometry("650x750")
+        self.root.minsize(550, 600)  # Minimum size
+        self.root.maxsize(900, 1000)  # Maximum size
+        self.root.resizable(True, True)  # Allow resize
         self.root.configure(bg="#0a0e27")
         
         # Color scheme - Dark hacker aesthetic
@@ -109,9 +111,34 @@ class PassOrFail:
         )
         tagline_label.pack(pady=(5, 0))
         
-        # Main container
-        main_frame = tk.Frame(self.root, bg=self.colors['bg_primary'])
-        main_frame.pack(fill=tk.BOTH, expand=True, padx=30, pady=20)
+        # Create main container with scrollbar
+        main_container = tk.Frame(self.root, bg=self.colors['bg_primary'])
+        main_container.pack(fill=tk.BOTH, expand=True, padx=30, pady=20)
+        
+        # Create canvas for scrolling
+        self.canvas = tk.Canvas(main_container, bg=self.colors['bg_primary'], highlightthickness=0)
+        scrollbar = tk.Scrollbar(main_container, orient="vertical", command=self.canvas.yview)
+        
+        # Create scrollable frame
+        main_frame = tk.Frame(self.canvas, bg=self.colors['bg_primary'])
+        
+        # Configure canvas
+        main_frame.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        )
+        
+        self.canvas.create_window((0, 0), window=main_frame, anchor="nw")
+        self.canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # Pack canvas and scrollbar
+        self.canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+        
+        # Bind mousewheel for smooth scrolling
+        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
+        self.canvas.bind_all("<Button-4>", self._on_mousewheel)  # Linux scroll up
+        self.canvas.bind_all("<Button-5>", self._on_mousewheel)  # Linux scroll down
         
         # Password input section
         input_container = tk.Frame(main_frame, bg=self.colors['bg_secondary'], 
@@ -642,6 +669,13 @@ class PassOrFail:
             text="Enter a password to check...",
             fg=self.colors['text_secondary']
         )
+    
+    def _on_mousewheel(self, event):
+        """Handle mousewheel scrolling"""
+        if event.num == 5 or event.delta < 0:  # Scroll down
+            self.canvas.yview_scroll(1, "units")
+        elif event.num == 4 or event.delta > 0:  # Scroll up
+            self.canvas.yview_scroll(-1, "units")
 
 
 def main():
